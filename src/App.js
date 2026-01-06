@@ -1,12 +1,74 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, TrendingUp, Calendar, AlertTriangle, Activity } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Heart, TrendingUp, Calendar, AlertTriangle } from 'lucide-react';
+
+const moodEmojis = {
+  1: {
+    emoji: "😰",
+    label: "Anxious/Distressed",
+    color: "linear-gradient(to bottom right, #f87171, #dc2626)",
+    keywords: ["freaking out", "heart is racing", "on edge", "losing it", "nervous wreck", "scared", "sweating", "stomach is in knots", "anxious", "distressed", "panic"],
+  },
+  2: {
+    emoji: "😞",
+    label: "Very Down",
+    color: "linear-gradient(to bottom right, #3b82f6, #1d4ed8)",
+    keywords: ["down in the dumps", "feeling blue", "bummed out", "hit rock bottom", "heartbroken", "feel like crap", "under a dark cloud", "crushed", "very down", "depressed"],
+  },
+  3: {
+    emoji: "😟",
+    label: "Worried",
+    color: "linear-gradient(to bottom right, #60a5fa, #3b82f6)",
+    keywords: ["stressed out", "biting my nails", "losing sleep", "eating me up", "concerned", "something's bugging me", "bad feeling", "mind is racing", "worried", "stressed"],
+  },
+  4: {
+    emoji: "😕",
+    label: "Low",
+    color: "linear-gradient(to bottom right, #9ca3af, #6b7280)",
+    keywords: ["not feeling great", "bit off", "under the weather", "rough day", "not myself", "feeling blah", "could be better", "dragging", "feeling drained", "low"],
+  },
+  5: {
+    emoji: "😐",
+    label: "Neutral",
+    color: "linear-gradient(to bottom right, #d1d5db, #9ca3af)",
+    keywords: ["whatever", "it is what it is", "can't complain", "so-so", "nothing special", "same old", "meh", "on the fence", "neutral", "okay"],
+  },
+  6: {
+    emoji: "😌",
+    label: "Calm",
+    color: "linear-gradient(to bottom right, #93c5fd, #60a5fa)",
+    keywords: ["chilling out", "taking it easy", "at ease", "keeping my cool", "peace of mind", "breathing easy", "smooth sailing", "no sweat", "laid back", "calm", "relaxed"],
+  },
+  7: {
+    emoji: "🙂",
+    label: "Content",
+    color: "linear-gradient(to bottom right, #86efac, #4ade80)",
+    keywords: ["doing well", "pretty good", "in a good place", "things are looking up", "feeling decent", "hanging in there well", "i'm good", "all good", "life's good", "content"],
+  },
+  8: {
+    emoji: "😊",
+    label: "Happy",
+    color: "linear-gradient(to bottom right, #fde047, #facc15)",
+    keywords: ["stoked", "feeling great", "in high spirits", "happy as a clam", "walking on sunshine", "bright-eyed", "tickled pink", "grinning", "pleased", "on cloud nine", "happy"],
+  },
+  9: {
+    emoji: "😄",
+    label: "Joyful",
+    color: "linear-gradient(to bottom right, #4ade80, #22c55e)",
+    keywords: ["over the moon", "jumping for joy", "living my best life", "having a blast", "on top of the world", "flying high", "pumped up", "buzzing", "having the time of my life", "joyful", "excited"],
+  },
+  10: {
+    emoji: "🥰",
+    label: "Thriving!",
+    color: "linear-gradient(to bottom right, #f9a8d4, #ec4899)",
+    keywords: ["living the dream", "in seventh heaven", "on fire", "crushing it", "feeling blessed", "everything's amazing", "head over heels", "floating on air", "never been better", "thriving", "amazing", "wonderful", "fantastic"],
+  },
+};
 
 const styles = {
   container: {
     minHeight: '100vh',
-    background: 'linear-gradient(to bottom right, #f3e7ff, #dbeafe)',
     padding: '20px',
+    transition: 'all 0.7s ease',
   },
   maxWidth: {
     maxWidth: '1200px',
@@ -14,32 +76,46 @@ const styles = {
   },
   header: {
     textAlign: 'center',
-    marginBottom: '40px',
-    marginTop: '40px',
-  },
-  titleContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '10px',
-    marginBottom: '10px',
+    marginBottom: '30px',
+    background: 'linear-gradient(to bottom right, #f3f4f6, #dbeafe, #fef3c7)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '20px',
+    padding: '30px',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+    border: '2px solid rgba(0, 0, 0, 0.1)',
   },
   title: {
     fontSize: '2.5rem',
     fontWeight: 'bold',
-    color: '#1f2937',
-    margin: 0,
+    background: 'linear-gradient(to right, #22c55e, #ec4899)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    marginBottom: '10px',
   },
   subtitle: {
-    color: '#6b7280',
+    color: '#1f2937',
+    fontSize: '1.2rem',
+    fontWeight: '500',
+  },
+  streakBadge: {
+    display: 'inline-block',
+    marginTop: '15px',
+    padding: '10px 20px',
+    background: 'linear-gradient(to right, #fb923c, #ef4444)',
+    color: 'white',
+    borderRadius: '20px',
     fontSize: '1.1rem',
+    fontWeight: 'bold',
   },
   card: {
-    background: 'white',
+    background: 'linear-gradient(to bottom right, #fafaf9, #ffffff, #fce7f3)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '20px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     padding: '30px',
     marginBottom: '30px',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+    border: '2px solid rgba(147, 197, 253, 0.3)',
   },
   cardTitle: {
     fontSize: '1.5rem',
@@ -47,509 +123,398 @@ const styles = {
     marginBottom: '20px',
     color: '#1f2937',
   },
-  moodSliderContainer: {
+  emojiDisplay: {
+    textAlign: 'center',
     marginBottom: '30px',
   },
-  moodDisplay: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  emoji: {
+    fontSize: '6rem',
     marginBottom: '15px',
   },
-  emoji: {
-    fontSize: '3rem',
-  },
   moodScore: {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    color: '#9333ea',
+    fontSize: '1.5rem',
+    fontWeight: '600',
+    color: '#374151',
+  },
+  moodLabel: {
+    fontSize: '1rem',
+    color: '#6b7280',
+    marginTop: '5px',
   },
   slider: {
     width: '100%',
     height: '12px',
     borderRadius: '10px',
     cursor: 'pointer',
+    marginBottom: '10px',
   },
   sliderLabels: {
     display: 'flex',
     justifyContent: 'space-between',
     fontSize: '0.875rem',
     color: '#6b7280',
-    marginTop: '5px',
-  },
-  label: {
-    display: 'block',
-    color: '#374151',
-    fontWeight: '500',
-    marginBottom: '10px',
   },
   textarea: {
     width: '100%',
-    padding: '12px',
-    border: '1px solid #d1d5db',
-    borderRadius: '8px',
+    padding: '15px',
+    border: '2px solid #e5e7eb',
+    borderRadius: '12px',
     fontSize: '1rem',
     resize: 'none',
     fontFamily: 'inherit',
+    background: 'linear-gradient(to bottom right, #dbeafe, #ffffff, #dcfce7)',
+    transition: 'border 0.3s',
   },
   button: {
     width: '100%',
-    background: '#9333ea',
+    padding: '18px',
+    background: 'linear-gradient(to right, #60a5fa, #4ade80, #f9a8d4)',
     color: 'white',
-    padding: '15px',
-    borderRadius: '8px',
-    fontWeight: '600',
     border: 'none',
+    borderRadius: '12px',
+    fontSize: '1.1rem',
+    fontWeight: '600',
     cursor: 'pointer',
-    fontSize: '1rem',
-    transition: 'background 0.3s',
-  },
-  buttonDisabled: {
-    background: '#d1d5db',
-    cursor: 'not-allowed',
+    transition: 'all 0.3s',
+    marginTop: '20px',
   },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '30px',
+    gap: '25px',
     marginBottom: '30px',
   },
   statsCard: {
-    background: 'white',
+    background: 'linear-gradient(to bottom right, #fef3c7, #fed7aa, #fef08a)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '20px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    padding: '30px',
-  },
-  statsHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    marginBottom: '20px',
-  },
-  statsTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  statItem: {
-    marginBottom: '15px',
-  },
-  statLabel: {
-    color: '#6b7280',
-    fontSize: '0.875rem',
-  },
-  statValue: {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    color: '#9333ea',
+    padding: '25px',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+    border: '2px solid #fed7aa',
   },
   crisisCard: {
-    background: '#fef2f2',
+    background: 'linear-gradient(to bottom right, #ccfbf1, #a5f3fc, #bfdbfe)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '20px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    padding: '30px',
-    border: '2px solid #fecaca',
+    padding: '25px',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+    border: '2px solid #5eead4',
   },
-  crisisTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: '#991b1b',
-    marginBottom: '15px',
-  },
-  crisisText: {
-    color: '#374151',
-    fontSize: '0.875rem',
-    marginBottom: '10px',
-  },
-  alertCard: {
-    background: '#fffbeb',
-    border: '2px solid #fcd34d',
+  historyCard: {
+    background: 'linear-gradient(to bottom right, #fae8ff, #fbcfe8, #fce7f3)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '20px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
     padding: '30px',
-    marginBottom: '30px',
-    display: 'flex',
-    gap: '15px',
-  },
-  alertTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: '#92400e',
-    marginBottom: '10px',
-  },
-  alertText: {
-    color: '#374151',
-    marginBottom: '15px',
-  },
-  alertList: {
-    listStyle: 'disc',
-    marginLeft: '20px',
-    color: '#374151',
-    fontSize: '0.875rem',
-  },
-  strategiesCard: {
-    background: 'linear-gradient(to right, #f3e7ff, #dbeafe)',
-    borderRadius: '20px',
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    padding: '30px',
-    marginBottom: '30px',
-  },
-  strategiesTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: '20px',
-  },
-  strategiesGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-    gap: '15px',
-  },
-  strategyItem: {
-    background: 'white',
-    padding: '15px',
-    borderRadius: '8px',
-    border: '1px solid #e9d5ff',
-    fontSize: '0.875rem',
-    color: '#374151',
-  },
-  historyEmpty: {
-    textAlign: 'center',
-    padding: '40px',
-    color: '#6b7280',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+    border: '2px solid #e9d5ff',
   },
   historyItem: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '15px',
     padding: '20px',
+    borderRadius: '12px',
+    border: '1px solid #fbcfe8',
+    background: 'linear-gradient(to right, #fce7f3, #fbcfe8)',
     marginBottom: '15px',
     transition: 'box-shadow 0.3s',
   },
-  historyHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '10px',
-  },
-  historyLeft: {
+  celebration: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     display: 'flex',
     alignItems: 'center',
-    gap: '15px',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+    zIndex: 1000,
   },
-  historyEmoji: {
-    fontSize: '2rem',
-  },
-  historyMood: {
-    fontWeight: '600',
-    color: '#1f2937',
-  },
-  historyDate: {
-    fontSize: '0.875rem',
-    color: '#6b7280',
-  },
-  historyDot: {
-    width: '12px',
-    height: '12px',
-    borderRadius: '50%',
-  },
-  historyNote: {
-    color: '#374151',
-    fontSize: '0.875rem',
-    marginLeft: '60px',
-  },
-  footer: {
+  celebrationContent: {
     textAlign: 'center',
-    marginTop: '40px',
-    marginBottom: '20px',
-    color: '#6b7280',
-    fontSize: '0.875rem',
+    animation: 'bounce 1s infinite',
   },
 };
 
 export default function MindfulMoments() {
-  const [currentMood, setCurrentMood] = useState(5);
-  const [journalEntry, setJournalEntry] = useState('');
-  const [moodHistory, setMoodHistory] = useState([]);
+  const [mood, setMood] = useState(5);
+  const [note, setNote] = useState('');
+  const [checkIns, setCheckIns] = useState([]);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('moodHistory') || '[]');
-    setMoodHistory(saved);
+    const stored = localStorage.getItem('mindful-checkins');
+    if (stored) {
+      setCheckIns(JSON.parse(stored));
+      calculateStreak(JSON.parse(stored));
+    }
   }, []);
 
-  const handleSaveEntry = () => {
-    if (!journalEntry.trim()) return;
+  useEffect(() => {
+    if (note.trim()) {
+      const lowerNote = note.toLowerCase();
+      for (const [moodLevel, data] of Object.entries(moodEmojis)) {
+        if (data.keywords.some((keyword) => lowerNote.includes(keyword))) {
+          setMood(Number(moodLevel));
+          break;
+        }
+      }
+    }
+  }, [note]);
 
-    const newEntry = {
-      id: Date.now(),
-      mood: currentMood,
-      note: journalEntry,
+  const calculateStreak = (checkins) => {
+    if (!checkins || checkins.length === 0) {
+      setStreak(0);
+      return;
+    }
+
+    const sortedCheckins = [...checkins].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    let currentStreak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < sortedCheckins.length; i++) {
+      const checkinDate = new Date(sortedCheckins[i].date);
+      checkinDate.setHours(0, 0, 0, 0);
+
+      const expectedDate = new Date(today);
+      expectedDate.setDate(today.getDate() - i);
+      expectedDate.setHours(0, 0, 0, 0);
+
+      if (checkinDate.getTime() === expectedDate.getTime() && sortedCheckins[i].mood >= 8) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+
+    setStreak(currentStreak);
+  };
+
+  const handleSave = () => {
+    if (!note.trim()) return;
+
+    const selectedMood = moodEmojis[mood];
+
+    const newCheckIn = {
+      id: Date.now().toString(),
+      mood,
+      note,
+      emoji: selectedMood.emoji,
       date: new Date().toISOString(),
-      displayDate: new Date().toLocaleDateString()
     };
 
-    const updated = [newEntry, ...moodHistory];
-    setMoodHistory(updated);
-    localStorage.setItem('moodHistory', JSON.stringify(updated));
-    
-    setJournalEntry('');
-    setCurrentMood(5);
+    const updatedCheckIns = [newCheckIn, ...checkIns];
+    setCheckIns(updatedCheckIns);
+    localStorage.setItem('mindful-checkins', JSON.stringify(updatedCheckIns));
+    calculateStreak(updatedCheckIns);
+
+    if (mood >= 8) {
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3000);
+    }
+
+    setNote('');
+    setMood(5);
   };
 
-  const getMoodEmoji = (mood) => {
-    if (mood <= 2) return '😢';
-    if (mood <= 4) return '😕';
-    if (mood <= 6) return '😐';
-    if (mood <= 8) return '🙂';
-    return '😊';
-  };
-
-  const getMoodColor = (mood) => {
-    if (mood <= 3) return '#ef4444';
-    if (mood <= 5) return '#f97316';
-    if (mood <= 7) return '#eab308';
-    return '#22c55e';
-  };
-
-  const averageMood = moodHistory.length > 0
-    ? (moodHistory.reduce((sum, entry) => sum + entry.mood, 0) / moodHistory.length).toFixed(1)
+  const avgMood = checkIns.length > 0 
+    ? (checkIns.reduce((sum, c) => sum + c.mood, 0) / checkIns.length).toFixed(1) 
     : 'N/A';
 
-  const detectConcerningPattern = () => {
-    if (moodHistory.length < 3) return false;
-    const recent = moodHistory.slice(0, 3);
-    return recent.every(entry => entry.mood <= 4);
-  };
-
-  const showConcernAlert = detectConcerningPattern();
-
-  const chartData = moodHistory
-    .slice(0, 7)
-    .reverse()
-    .map(entry => ({
-      date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      mood: entry.mood
-    }));
-
-  const getCopingStrategies = (mood) => {
-    if (mood <= 3) {
-      return [
-        "Try the 5-4-3-2-1 grounding technique",
-        "Reach out to a trusted friend or family member",
-        "Consider speaking with a mental health professional",
-        "Take a short walk outside if possible"
-      ];
-    } else if (mood <= 6) {
-      return [
-        "Practice deep breathing for 5 minutes",
-        "Listen to your favorite uplifting music",
-        "Do a quick 10-minute meditation",
-        "Journal about what's on your mind"
-      ];
-    } else {
-      return [
-        "Share your positive energy with someone",
-        "Reflect on what made today great",
-        "Try a new hobby or activity",
-        "Practice gratitude - list 3 things you're thankful for"
-      ];
-    }
-  };
-
-  const strategies = getCopingStrategies(currentMood);
+  const currentMood = moodEmojis[mood];
 
   return (
-    <div style={styles.container}>
+    <div style={{...styles.container, background: currentMood.color}}>
+      <style>{`
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
+
+      {showCelebration && (
+        <div style={styles.celebration}>
+          <div style={styles.celebrationContent}>
+            <div style={{fontSize: '8rem', marginBottom: '20px'}}>🎉</div>
+            <div style={{fontSize: '2.5rem', fontWeight: 'bold', color: 'white', textShadow: '2px 2px 4px rgba(0,0,0,0.3)'}}>
+              {streak > 0 ? `🔥 ${streak} Day Streak! Keep it up!` : 'Amazing! Great day!'}
+            </div>
+            <div style={{fontSize: '4rem', marginTop: '20px', display: 'flex', gap: '20px', justifyContent: 'center'}}>
+              {['🌟', '✨', '💫', '⭐', '🌈'].map((emoji, i) => (
+                <span key={i} style={{animation: `pulse 1s infinite ${i * 100}ms`}}>
+                  {emoji}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={styles.maxWidth}>
         <div style={styles.header}>
-          <div style={styles.titleContainer}>
-            <Heart color="#9333ea" size={32} />
-            <h1 style={styles.title}>MindfulMoments</h1>
-          </div>
-          <p style={styles.subtitle}>Your daily mental health companion</p>
+          <h1 style={styles.title}>MindfulMoments</h1>
+          <p style={styles.subtitle}>Your daily mental health partner</p>
+          {streak > 0 && (
+            <div style={styles.streakBadge}>
+              🔥 {streak} Day Streak of Good Moods!
+            </div>
+          )}
         </div>
 
         <div style={styles.card}>
-          <h2 style={styles.cardTitle}>How are you feeling today?</h2>
+          <h2 style={styles.cardTitle}>Hello there! Anything to share? I have your back!</h2>
           
-          <div style={styles.moodSliderContainer}>
-            <div style={styles.moodDisplay}>
-              <span style={styles.emoji}>{getMoodEmoji(currentMood)}</span>
-              <span style={styles.moodScore}>{currentMood}/10</span>
+          <div style={styles.emojiDisplay}>
+            <div style={styles.emoji}>{currentMood.emoji}</div>
+            <p style={styles.moodScore}>{mood}/10</p>
+            <p style={styles.moodLabel}>{currentMood.label}</p>
+          </div>
+
+          <div style={{marginBottom: '25px'}}>
+            <div style={styles.sliderLabels}>
+              <span>Anxious</span>
+              <span>Thriving</span>
             </div>
             <input
               type="range"
               min="1"
               max="10"
-              value={currentMood}
-              onChange={(e) => setCurrentMood(Number(e.target.value))}
+              value={mood}
+              onChange={(e) => setMood(Number(e.target.value))}
               style={styles.slider}
             />
-            <div style={styles.sliderLabels}>
-              <span>Very Low</span>
-              <span>Amazing</span>
-            </div>
           </div>
 
-          <div style={{marginBottom: '30px'}}>
-            <label style={styles.label}>
+          <div>
+            <label style={{display: 'block', fontWeight: '500', marginBottom: '10px', color: '#374151'}}>
               What happened today? (optional)
             </label>
             <textarea
-              value={journalEntry}
-              onChange={(e) => setJournalEntry(e.target.value)}
-              placeholder="Share your thoughts, feelings, or what made today special..."
+              placeholder="Share your day-to-day feelings here..."
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
               style={styles.textarea}
               rows="4"
+              onFocus={(e) => e.target.style.borderColor = '#60a5fa'}
+              onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
             />
+            <p style={{fontSize: '0.875rem', color: '#6b7280', marginTop: '8px'}}>
+              Share your day-to-day feeling in the above section and I can create your records and analyze your mental health.
+            </p>
           </div>
 
           <button
-            onClick={handleSaveEntry}
-            disabled={!journalEntry.trim()}
+            onClick={handleSave}
+            disabled={!note.trim()}
             style={{
               ...styles.button,
-              ...((!journalEntry.trim()) ? styles.buttonDisabled : {}),
+              opacity: note.trim() ? 1 : 0.5,
+              cursor: note.trim() ? 'pointer' : 'not-allowed',
             }}
             onMouseEnter={(e) => {
-              if (journalEntry.trim()) e.target.style.background = '#7e22ce';
+              if (note.trim()) e.target.style.transform = 'scale(1.02)';
             }}
             onMouseLeave={(e) => {
-              if (journalEntry.trim()) e.target.style.background = '#9333ea';
+              e.target.style.transform = 'scale(1)';
             }}
           >
-            Save Today's Check-in
+            I'm with you, got it
           </button>
         </div>
 
         <div style={styles.grid}>
           <div style={styles.statsCard}>
-            <div style={styles.statsHeader}>
-              <TrendingUp color="#9333ea" />
-              <h3 style={styles.statsTitle}>Your Progress</h3>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px'}}>
+              <TrendingUp color="#92400e" />
+              <h3 style={{fontSize: '1.25rem', fontWeight: '600', color: '#92400e', margin: 0}}>Your Progress</h3>
             </div>
-            <div style={styles.statItem}>
-              <p style={styles.statLabel}>Total Check-ins</p>
-              <p style={styles.statValue}>{moodHistory.length}</p>
+            <div style={{marginBottom: '15px'}}>
+              <p style={{fontSize: '0.875rem', color: '#92400e'}}>Total Check-ins</p>
+              <p style={{fontSize: '2rem', fontWeight: 'bold', color: '#ea580c'}}>{checkIns.length}</p>
             </div>
-            <div style={styles.statItem}>
-              <p style={styles.statLabel}>Average Mood</p>
-              <p style={styles.statValue}>{averageMood}</p>
+            <div>
+              <p style={{fontSize: '0.875rem', color: '#92400e'}}>Average Mood</p>
+              <p style={{fontSize: '2rem', fontWeight: 'bold', color: '#ea580c'}}>{avgMood}</p>
             </div>
           </div>
 
           <div style={styles.crisisCard}>
-            <h3 style={styles.crisisTitle}>Need Help Now?</h3>
-            <p style={styles.crisisText}>
-              <strong>988 Suicide & Crisis Lifeline</strong><br />
-              Call or text 988 (24/7)
-            </p>
-            <p style={styles.crisisText}>
-              <strong>Crisis Text Line</strong><br />
-              Text HOME to 741741
-            </p>
-            <p style={styles.crisisText}>
-              <strong>SAMHSA Helpline</strong><br />
-              1-800-662-4357
-            </p>
+            <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px'}}>
+              <AlertTriangle color="#134e4a" />
+              <h3 style={{fontSize: '1.25rem', fontWeight: '600', color: '#134e4a', margin: 0}}>Need Help Now?</h3>
+            </div>
+            <div style={{fontSize: '0.875rem'}}>
+              <div style={{marginBottom: '12px'}}>
+                <p style={{fontWeight: '600', color: '#134e4a'}}>988 Suicide & Crisis Lifeline</p>
+                <p style={{color: '#0f766e'}}>Call or text 988 (24/7)</p>
+              </div>
+              <div style={{marginBottom: '12px'}}>
+                <p style={{fontWeight: '600', color: '#134e4a'}}>Crisis Text Line</p>
+                <p style={{color: '#0f766e'}}>Text HOME to 741741</p>
+              </div>
+              <div style={{marginBottom: '12px'}}>
+                <p style={{fontWeight: '600', color: '#134e4a'}}>SAMHSA Helpline</p>
+                <p style={{color: '#0f766e'}}>1-800-662-4357</p>
+              </div>
+              <div style={{marginBottom: '12px'}}>
+                <p style={{fontWeight: '600', color: '#134e4a'}}>AASRA (India)</p>
+                <p style={{color: '#0f766e'}}>91-9820466726</p>
+              </div>
+              <div>
+                <p style={{fontWeight: '600', color: '#134e4a'}}>Vandrevala Foundation</p>
+                <p style={{color: '#0f766e'}}>1860-2662-345</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {showConcernAlert && (
-          <div style={styles.alertCard}>
-            <AlertTriangle color="#f59e0b" size={24} style={{flexShrink: 0, marginTop: '5px'}} />
-            <div>
-              <h3 style={styles.alertTitle}>We've Noticed a Pattern</h3>
-              <p style={styles.alertText}>
-                Your mood has been lower than usual for the past few days. This might be a good time to:
-              </p>
-              <ul style={styles.alertList}>
-                <li>Talk to someone you trust</li>
-                <li>Consider reaching out to a mental health professional</li>
-                <li>Use the crisis resources above if you need immediate support</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {chartData.length > 0 && (
-          <div style={styles.card}>
-            <div style={styles.statsHeader}>
-              <Activity color="#9333ea" />
-              <h3 style={styles.statsTitle}>Mood Trends</h3>
-            </div>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis domain={[0, 10]} />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="mood" 
-                  stroke="#9333ea" 
-                  strokeWidth={3}
-                  dot={{ fill: '#9333ea', r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        {journalEntry && (
-          <div style={styles.strategiesCard}>
-            <h3 style={styles.strategiesTitle}>
-              💡 Suggested Strategies for You
-            </h3>
-            <div style={styles.strategiesGrid}>
-              {strategies.map((strategy, index) => (
-                <div key={index} style={styles.strategyItem}>
-                  {strategy}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div style={styles.card}>
-          <div style={styles.statsHeader}>
-            <Calendar color="#9333ea" />
-            <h3 style={styles.statsTitle}>Recent Check-ins</h3>
+        <div style={styles.historyCard}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px'}}>
+            <Calendar color="#701a75" />
+            <h3 style={{fontSize: '1.25rem', fontWeight: '600', color: '#701a75', margin: 0}}>Recent Check-ins</h3>
           </div>
           
-          {moodHistory.length === 0 ? (
-            <p style={styles.historyEmpty}>No check-ins yet. Start tracking your mood above!</p>
+          {checkIns.length === 0 ? (
+            <p style={{textAlign: 'center', color: '#9333ea', padding: '40px 0'}}>
+              No check-ins yet. Start tracking your mood above!
+            </p>
           ) : (
             <div style={{maxHeight: '400px', overflowY: 'auto'}}>
-              {moodHistory.map((entry) => (
+              {checkIns.slice(0, 10).map((checkIn) => (
                 <div 
-                  key={entry.id} 
+                  key={checkIn.id} 
                   style={styles.historyItem}
-                  onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.15)'}
+                  onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)'}
                   onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
                 >
-                  <div style={styles.historyHeader}>
-                    <div style={styles.historyLeft}>
-                      <span style={styles.historyEmoji}>{getMoodEmoji(entry.mood)}</span>
-                      <div>
-                        <p style={styles.historyMood}>Mood: {entry.mood}/10</p>
-                        <p style={styles.historyDate}>{entry.displayDate}</p>
-                      </div>
+                  <div style={{fontSize: '3rem'}}>{checkIn.emoji}</div>
+                  <div style={{flex: 1}}>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px'}}>
+                      <span style={{fontWeight: '600', color: '#701a75'}}>{checkIn.mood}/10</span>
+                      <span style={{fontSize: '0.875rem', color: '#9333ea'}}>
+                        {new Date(checkIn.date).toLocaleDateString()}
+                      </span>
                     </div>
-                    <div style={{...styles.historyDot, background: getMoodColor(entry.mood)}}></div>
+                    {checkIn.note && <p style={{color: '#86198f', fontSize: '0.875rem', margin: 0}}>{checkIn.note}</p>}
                   </div>
-                  {entry.note && (
-                    <p style={styles.historyNote}>{entry.note}</p>
-                  )}
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        <div style={styles.footer}>
-          <p>Your data is stored locally and privately on your device.</p>
-          <p style={{marginTop: '5px'}}>This is not a substitute for professional mental health care.</p>
-        </div>
+        <p style={{textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.8)', marginTop: '30px', textShadow: '1px 1px 2px rgba(0,0,0,0.3)'}}>
+          Your data is stored locally and privately on your device.
+          <br />
+          This is not a substitute for professional mental health care.
+        </p>
       </div>
     </div>
   );
